@@ -1,0 +1,13 @@
+// To check your environment run: gradle  mydigipass
+
+environments {
+
+  production {
+    intent_name = 'com.vasco.intent.authenticate'
+    intent_uri = 'authenticate://mydigipass.com/'
+    mydigipass_package_name = 'com.vasco.mydigipass'
+    mdp_fallback_url = 'https://www.mydigipass.com'
+    mydigipass_package_name = 'com.vasco.mydigipass'
+  }
+
+}

@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<resources>
+  <string name="cancel">Abbrechen</string>
+  <string name="install_app">Applikation installieren</string>
+  <string name="install_app_text">M&#xF6;chten Sie die MYDIGIPASS App auf diesem Ger&#xE4;t installieren?</string>
+  <string name="login_with_browser">Anmelden via Webbrowser</string>
+  <string name="no_thanks">Nein danke.</string>
+  <string name="title_dialog">MYDIGIPASS</string>
+  <string name="update_app">Applikation aktualisieren</string>
+  <string name="update_app_text">M&#xF6;chten Sie die MYDIGIPASS App auf diesem Ger&#xE4;t aktualisieren?</string>
+</resources>
