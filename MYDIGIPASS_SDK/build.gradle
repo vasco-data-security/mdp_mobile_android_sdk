@@ -1,4 +1,4 @@
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.library'
 
 buildscript {
     repositories {
@@ -16,6 +16,10 @@ repositories {
 
 dependencies {
     compile 'com.android.support:appcompat-v7:23.0.1'
+
+    testCompile 'junit:junit:4.12'
+    testCompile "org.mockito:mockito-core:1.9.5"
+    testCompile "org.robolectric:robolectric:3.0-rc2"
 }
 
 android {
@@ -40,5 +44,35 @@ android {
             proguardFile 'proguard-rules.txt'
             proguardFile getDefaultProguardFile('proguard-android-optimize.txt')
         }
+    }
+}
+
+gradle.projectsEvaluated {
+    // Base path which is recognized by android studio.
+    def testClassesPath = "${buildDir}/intermediates/classes/test/"
+    // Copy must be done for each variant.
+    def variants = []
+
+    variants.each { variant ->
+        def variationName = variant.name.capitalize()
+
+        // Get the flavor and also merge flavor groups.
+        def productFlavorNames = variant.productFlavors.collect { it.name.capitalize() }
+        if (productFlavorNames.isEmpty()) {
+            productFlavorNames = [""]
+        }
+        productFlavorNames = productFlavorNames.join('')
+
+        // Base path addition for this specific variant.
+        def variationPath = variant.buildType.name;
+        if (productFlavorNames != null && !productFlavorNames.isEmpty()) {
+            variationPath = uncapitalize(productFlavorNames) + "/${variationPath}"
+        }
+
+        // Specific copy task for each variant
+        def copyTestResourcesTask = project.tasks.create("copyTest${variationName}Resources", Copy)
+        copyTestResourcesTask.from("${projectDir}/src/test/resources")
+        copyTestResourcesTask.into("${testClassesPath}/${variationPath}")
+        copyTestResourcesTask.execute()
     }
 }
