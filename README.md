@@ -14,37 +14,12 @@ allowing you to reuse your server integration of the Secure Connect API in your 
 
 ## Installation
 
-Build:
+1. Download the aar file in the release section.
+2. put the aar file in your app's lib folder.
+3. Add following dependency into your gradle file: compile(name: 'MYDIGIPASS_SDK-1.0', ext: 'aar')
+4. Rebuild your application.
 
-	./gradlew -q assembleRelease
-
-Run the following Maven command in this project, giving it a handle to your project via `DlocalRepositoryPath`
-
-	mvn install:install-file \
-	    -DgroupId=com.vasco.mydigipass.sdk \
-	    -DartifactId=MYDIGIPASS_SDK \
-	    -Dversion=1.0 \
-	    -DgeneratePom=true \
-	    -Dpackaging=aar \
-	    -Dfile=MYDIGIPASS_SDK/build/libs/MYDIGIPASS_SDK.aar \
-	    -DlocalRepositoryPath=/path/to/your/project_root/module/libs
-
-Configure your project:
-
-	repositories {
-	  mavenCentral()
-	  maven {
-	    url "libs"
-	  }
-	}
-
-	dependencies {
-	  compile 'com.vasco.mydigipass.sdk:MYDIGIPASS_SDK:+'
-	}
-
-## Code
-
-### Configuration and authentication request
+## Using the MYDIGIPASS SDK
 
 In the `onCreate` LifeCycle callback of your activity:
 
@@ -65,7 +40,7 @@ Performing the actual authentication, also passing server-side generated OAuth s
 
 	mydigipass.authenticate("xyzabc1234567");
 
-Review [this sequence diagram](https://developer.mydigipass.com/mobile_app_authentication) and
+Review [this sequence diagram](https://developer.mydigipass.com/mobile_integration) and
 the [OAuth 2.0 spec](http://tools.ietf.org/html/rfc6749#section-10.12) for more info about the state parameter.
 
 ### Callbacks

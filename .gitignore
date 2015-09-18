@@ -7,7 +7,7 @@ secret_stash/
 .idea/
 .gradle/
 local.properties
-*/build/
+**/build/
 *.iml
 *.iws
 *.ipr
