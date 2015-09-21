@@ -64,7 +64,7 @@ public class YourActivity extends Activity implements OnMDPAuthenticationListene
         String state = response.getState();
 
         // Pass authorizationCode to your server-side implementation of the Secure Connect API
-        // See https://developer.mydigipass.com/mobile_app_authentication
+        // See https://developer.mydigipass.com/mobile_integration#mobile_app_sdk
     }
 
     @Override
