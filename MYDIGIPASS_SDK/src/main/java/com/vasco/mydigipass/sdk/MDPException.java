@@ -6,7 +6,7 @@ package com.vasco.mydigipass.sdk;
 
 public class MDPException extends RuntimeException {
 
-  public MDPException(String detailMessage, Throwable throwable) {
-    super(detailMessage, throwable);
-  }
+    public MDPException(String detailMessage, Throwable throwable) {
+        super(detailMessage, throwable);
+    }
 }

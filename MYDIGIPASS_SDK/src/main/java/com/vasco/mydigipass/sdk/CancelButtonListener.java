@@ -8,17 +8,17 @@ import android.content.DialogInterface;
 
 public class CancelButtonListener implements DialogInterface.OnClickListener {
 
-  private MDPMobile mdpMobile;
+    private MDPMobile mdpMobile;
 
-  public CancelButtonListener(MDPMobile mdpMobile) {
-    this.mdpMobile = mdpMobile;
-  }
+    public CancelButtonListener(MDPMobile mdpMobile) {
+        this.mdpMobile = mdpMobile;
+    }
 
-  @Override
-  public void onClick(DialogInterface dialog, int which) {
-    // Open the play store.
-    dialog.dismiss();
-    mdpMobile.openBrowser();
-  }
+    @Override
+    public void onClick(DialogInterface dialog, int which) {
+        // Open the play store.
+        dialog.dismiss();
+        mdpMobile.openBrowser();
+    }
 
 }

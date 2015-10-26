@@ -10,6 +10,7 @@ package com.vasco.mydigipass.sdk;
  * When the request succeeds it calls onMDPAuthenticationSuccess.
  */
 public interface OnMDPAuthenticationListener {
-  void onMDPAuthenticationSuccess(MDPResponse response);
-  void onMDPAuthenticationFail(MDPResponse response);
+    void onMDPAuthenticationSuccess(MDPResponse response);
+
+    void onMDPAuthenticationFail(MDPResponse response);
 }

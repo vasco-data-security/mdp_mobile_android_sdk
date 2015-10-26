@@ -4,61 +4,61 @@
 
 package com.vasco.mydigipass.sdk;
 
+import java.util.Map;
+
 public class MDPResponse {
-  private String state;
-  private String authorizationCode;
-  private String response;
-  private String redirectUri;
-  private boolean success;
+    private String state;
+    private String authorizationCode;
+    private String redirectUri;
+    private String scope;
+    private Map<String, String> passthroughParams;
+    private boolean success;
 
-  public String getState() {
-    return state;
-  }
+    public String getState() {
+        return state;
+    }
 
-  public void setState(String state) {
-    this.state = state;
-  }
+    public void setState(String state) {
+        this.state = state;
+    }
 
-  public String getAuthorizationCode() {
-    return authorizationCode;
-  }
+    public String getAuthorizationCode() {
+        return authorizationCode;
+    }
 
-  public void setAuthorizationCode(String authorizationCode) {
-    this.authorizationCode = authorizationCode;
-  }
+    public void setAuthorizationCode(String authorizationCode) {
+        this.authorizationCode = authorizationCode;
+    }
 
-  public String getResponse() {
-    return response;
-  }
+    public boolean isSuccess() {
+        return success;
+    }
 
-  public void setResponse(String response) {
-    this.response = response;
-  }
+    public void setSuccess(boolean success) {
+        this.success = success;
+    }
 
-  public boolean isSuccess() {
-    return success;
-  }
+    public String getRedirectUri() {
+        return redirectUri;
+    }
 
-  public void setSuccess(boolean success) {
-    this.success = success;
-  }
+    public void setRedirectUri(String redirectUri) {
+        this.redirectUri = redirectUri;
+    }
 
-  public String getRedirectUri() {
-    return redirectUri;
-  }
+    public String getScope() {
+        return scope;
+    }
 
-  public void setRedirectUri(String redirectUri) {
-    this.redirectUri = redirectUri;
-  }
+    public void setScope(String scope) {
+        this.scope = scope;
+    }
 
-  @Override
-  public String toString() {
-    return "MDPResponse{" +
-      "state='" + state + '\'' +
-      ", authorizationCode='" + authorizationCode + '\'' +
-      ", response='" + response + '\'' +
-      ", redirectUri='" + redirectUri + '\'' +
-      ", success=" + success +
-      '}';
-  }
+    public Map<String, String> getPassthroughParams() {
+        return passthroughParams;
+    }
+
+    public void setPassthroughParams(Map<String, String> passthroughParams) {
+        this.passthroughParams = passthroughParams;
+    }
 }

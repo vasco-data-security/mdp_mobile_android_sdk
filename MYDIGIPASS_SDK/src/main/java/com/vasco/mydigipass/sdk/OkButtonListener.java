@@ -8,15 +8,15 @@ import android.content.DialogInterface;
 
 public class OkButtonListener implements DialogInterface.OnClickListener {
 
-  private MDPMobile mdpMobile;
+    private MDPMobile mdpMobile;
 
-  public OkButtonListener(MDPMobile mdpMobile) {
-    this.mdpMobile = mdpMobile;
-  }
+    public OkButtonListener(MDPMobile mdpMobile) {
+        this.mdpMobile = mdpMobile;
+    }
 
-  @Override
-  public void onClick(DialogInterface dialog, int which) {
-    dialog.dismiss();
-    mdpMobile.openStore();
-  }
+    @Override
+    public void onClick(DialogInterface dialog, int which) {
+        dialog.dismiss();
+        mdpMobile.openStore();
+    }
 }
