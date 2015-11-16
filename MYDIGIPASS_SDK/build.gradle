@@ -27,9 +27,9 @@ android {
     buildToolsVersion "23.0.1"
 
     defaultConfig {
-        versionCode 2
-        versionName "1.1.0"
-        minSdkVersion 7
+        versionCode 3
+        versionName "1.2.0"
+        minSdkVersion 14
         targetSdkVersion 23
 
         buildConfigField "String", "INTENT_NAME", "\"com.vasco.intent.authenticate\"";

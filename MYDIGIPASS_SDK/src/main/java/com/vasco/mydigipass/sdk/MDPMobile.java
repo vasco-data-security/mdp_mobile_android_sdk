@@ -10,13 +10,15 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.Bundle;
 import android.view.ContextThemeWrapper;
 
-import com.vasco.mydigipass.sdk.oauth.OauthParameters;
+import com.vasco.mydigipass.sdk.oauth.CollectionUtils;
 import com.vasco.mydigipass.sdk.oauth.OauthUriBuilder;
+import com.vasco.mydigipass.sdk.oauth.ResponseBuilder;
+import com.vasco.mydigipass.sdk.oauth.models.Parameters;
+import com.vasco.mydigipass.sdk.oauth.models.Response;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 
@@ -26,30 +28,25 @@ public class MDPMobile {
     private static final String INTENT_URI = BuildConfig.INTENT_URI;
     private static final String MYDIGIPASS_PACKAGE_NAME = BuildConfig.MYDIGIPASS_PACKAGE_NAME;
     private Activity context;
-    private String clientId;
-    private String state;
-    private String redirectUri;
-    private String scope;
-    private Map<String, String> passthroughParams;
+    private Parameters incomingParameters;
     private OnMDPAuthenticationListener mOnAuthenticatedListener;
 
     /**
      * Default constructor.
-     * Provide the activity where you are going to implement the MYDIGIPASS login button.
      *
      * @param activity Activity that implements a MYDIGIPASS login button.
      */
     public MDPMobile(Activity activity) {
         setContext(activity);
+        this.incomingParameters = new Parameters();
     }
 
     /**
-     * Constructor
-     * Provide your MYDIGIPASS client id and mobile redirect uri.
+     * Alternative constructor.
      *
      * @param activity    Activity that implements a MYDIGIPASS login button.
      * @param clientId    Your MYDIGIPASS client ID registered via developer.mydigipass.com.
-     * @param redirectUri Your MYDIGIPASS mobile redirect uri registered via developer.mydigipass.com.
+     * @param redirectUri Your MYDIGIPASS mobile redirect URI registered via developer.mydigipass.com.
      */
     public MDPMobile(Activity activity, String clientId, String redirectUri) {
         this(activity);
@@ -58,80 +55,51 @@ public class MDPMobile {
     }
 
     /**
-     * Returns the MYDIGIPASS client ID.
+     * Returns the client ID.
      *
      * @return clientID
      */
     public String getClientId() {
-        return clientId;
+        return this.incomingParameters.get("client_id");
     }
 
     /**
-     * Sets the MYDIGIPASS client ID.
+     * Sets the client ID.
      *
      * @param clientId Your MYDIGIPASS client ID registered via https://developer.mydigipass.com.
      */
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
+    public void setClientId(String clientId) throws MDPException {
+        if (clientId != null) {
+            this.incomingParameters.put("client_id", clientId);
+        } else {
+            throw new MDPException("The client ID cannot be null");
+        }
     }
 
     /**
-     * Returns the OAuth state parameter set in the original authentication request.
-     * See http://tools.ietf.org/html/rfc6749#section-10.12 for more information.
-     *
-     * @return state
-     */
-    public String getState() {
-        return state;
-    }
-
-    /**
-     * Sets the OAuth state.
-     *
-     * @param state
-     */
-    public void setState(String state) {
-        this.state = state;
-    }
-
-    /**
-     * Returns the set MYDIGIPASS.COM mobile redirect URI registered via developer.mydigipass.com.
+     * Returns the configured redirect uri.
      *
      * @return redirect uri
      */
     public String getRedirectUri() {
-        return redirectUri;
+        return this.incomingParameters.get("redirect_uri");
     }
 
     /**
-     * Explicitly sets the MYDIGIPASS mobile redirect URI.
+     * Configures the redirect uri for your authentication request.
      *
      * @param redirectUri your MYDIGIPASS redirectURI
      */
-    public void setRedirectUri(String redirectUri) {
-        this.redirectUri = redirectUri;
+    public void setRedirectUri(String redirectUri) throws MDPException {
+        if (redirectUri != null) {
+            this.incomingParameters.put("redirect_uri", redirectUri);
+        } else {
+            throw new MDPException("The redirect URI cannot be null");
+        }
     }
 
     /**
-     * Space-delimited values used to determine which MYDIGIPASS user data can be consumed with the OAuth Access Token.
-     *
-     * @return scope
-     */
-    public String getScope() {
-        return scope;
-    }
-
-    /**
-     * Sets the MYDIGIPASS scope.
-     *
-     * @param scope
-     */
-    public void setScope(String scope) {
-        this.scope = scope;
-    }
-
-    /**
-     * Returns the MYDIGIPASS.COM authentication listener.
+     * Returns the listener.
      *
      * @return MYDIGIPASS authentication listener.
      * @see com.vasco.mydigipass.sdk.OnMDPAuthenticationListener
@@ -151,19 +119,18 @@ public class MDPMobile {
     }
 
     /**
-     * Perform an authenticate request. If the app exists on the user's phone, it is going to open the
+     * Performs the authentication. If the app exists on the user's phone, it's going to open the
      * app. If the app is not installed a dialog will ask to install it or to perform the authentication
      * in a mobile browser instead.
      *
-     * @param state parameter to validate your request.
-     * @throws MDPException
+     * @param state An opaque value used by the client to maintain state between the request and callback, not null
      */
-    public void authenticate(String state) throws MDPException {
+    public void authenticate(String state) {
         authenticate(state, null, null);
     }
 
     /**
-     * Perform an authenticate request. If the app exists on the user's phone, it is going to open the
+     * Performs the authentication. If the app exists on the user's phone, it's going to open the
      * app. If the app is not installed a dialog will ask to install it or to perform the authentication
      * in a mobile browser instead.
      *
@@ -172,28 +139,22 @@ public class MDPMobile {
      * @param passthroughParams Anything extra, may be null
      */
     public void authenticate(String state, String scope, Map<String, String> passthroughParams) {
-        setState(state);
-        setScope(scope);
+        this.incomingParameters.put("state", state);
+        this.incomingParameters.put("scope", scope);
+
         setPassthroughParams(passthroughParams);
 
         Intent mdp = new Intent(INTENT_NAME, Uri.parse(INTENT_URI));
-        mdp.putExtra("clientId", getClientId());
-        mdp.putExtra("redirectUri", getRedirectUri());
-        mdp.putExtra("state", getState());
 
-        if (getScope() != null) {
-            mdp.putExtra("scope", getScope());
-        }
-
-        if (getPassthroughParams() != null) {
-            for (Map.Entry<String, String> entry : getPassthroughParams().entrySet()) {
-                mdp.putExtra(entry.getKey(), entry.getValue());
-            }
-        }
+        Bundle bundle = CollectionUtils.map2bundle(this.incomingParameters);
+        mdp.putExtras(bundle);
 
         openAppOrDialogForIntent(mdp);
     }
 
+    /**
+     * Opens the marketplace place and redirects the user to the MYDIGIPASS app.
+     */
     public void openStore() {
         // Open the play store with the MDP app.
         Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -202,40 +163,9 @@ public class MDPMobile {
     }
 
     /**
-     * Returns the configured MYDIGIPASS OAuth url.
+     * Detects and handles an incoming intent triggered by the MYDIGIPASS website.
      *
-     * @return oauth url
-     */
-    protected String getOAuthUrl() {
-        OauthParameters parameters = new OauthParameters();
-        OauthUriBuilder uriBuilder = new OauthUriBuilder(BuildConfig.MDP_FALLBACK_URL);
-
-        // Add anything extra to the URI
-        parameters.addParameters(getPassthroughParams());
-
-        parameters.addParameter("bundle_identifier", getPackageName());
-        parameters.addParameter("client_id", getClientId());
-        parameters.addParameter("redirect_uri", getRedirectUri());
-        parameters.addParameter("state", getState());
-        parameters.addParameter("scope", getScope());
-
-        uriBuilder.setParameters(parameters);
-
-        return uriBuilder.getUri(true).toString();
-    }
-
-    /**
-     * Returns the MYDIGIPASS OAuth url in URI format.
-     *
-     * @return Uri of the Oauth url.
-     */
-    public Uri getOauthUri() {
-        return Uri.parse(getOAuthUrl());
-    }
-
-    /**
-     * Lifecycle call. Call it in your onCreate of your activity. It enables authentication
-     * via the user's browser when the MYDIGIPASS Authenticator For Mobile app is not installed.
+     * It enables authentication via the user's browser when the MYDIGIPASS App is not installed.
      * If it's not an authentication request, this method does nothing.
      */
     public void webFlow() {
@@ -249,63 +179,34 @@ public class MDPMobile {
 
                 // We don't want this fired when users have multiple browser intents.
                 if (data.toString() != null && isValidResponseRedirectUri(data.toString())) {
-                    try {
-
-                        String code = data.getQueryParameter("code");
-                        String state = data.getQueryParameter("state");
-                        MDPResponse response;
-
-                        if (code != null && state != null) {
-                            response = buildResponse(true, code, state, getRedirectUri(), getScope(), getPassthroughParams());
-                            mOnAuthenticatedListener.onMDPAuthenticationSuccess(response);
-                        } else {
-                            response = buildResponse(false, code, state, getRedirectUri(), getScope(), getPassthroughParams());
-                            mOnAuthenticatedListener.onMDPAuthenticationFail(response);
-                        }
-
-                    } catch (UnsupportedOperationException e) {
-                        mOnAuthenticatedListener.onMDPAuthenticationFail(buildResponse(false, null, null, getRedirectUri(), getScope(), getPassthroughParams()));
-                        throw new MDPException("We could not parse the code and/or state parameter from your uri.", e);
-                    }
+                    Response response = ResponseBuilder.build(data);
+                    MDPResponse mdpResponse = new MDPResponse(response);
+                    callback(mdpResponse);
                 }
 
             }
         }
-
     }
 
     /**
-     * Lifecycle call. Override the onActivityResult method of your activity and call this method. It
-     * handles the intent from the MYDIGIPASS app and does the callbacks on the interface.
+     * Checks and handles the incoming intent onActivityResult. Use this method in the OnActivityResult callback.
      *
      * @param requestCode requestCode
      * @param resultCode  resultCode
      * @param data        Intent from the MYDIGIPASS app
      */
     public void handleResult(int requestCode, int resultCode, Intent data) {
-
         if (canHandleResult(data)) {
-
-            MDPResponse response;
-
-            String code = data.getStringExtra("auth-code");
-            String state = data.getStringExtra("state");
-
-            if (isValidRequest(code, state)) {
-                response = buildResponse(true, code, state, getRedirectUri(), getScope(), getPassthroughParams());
-                mOnAuthenticatedListener.onMDPAuthenticationSuccess(response);
-            } else {
-                response = buildResponse(false, code, state, getRedirectUri(), getScope(), getPassthroughParams());
-                mOnAuthenticatedListener.onMDPAuthenticationFail(response);
-            }
+            Response response = ResponseBuilder.build(data.getExtras());
+            MDPResponse mdpResponse = new MDPResponse(response);
+            callback(mdpResponse);
         }
-
     }
 
     /**
-     * Check if the MYDIGIPASS app is installed on the user's phone.
+     * Checks if the MYDIGIPASS App is installed on the device.
      *
-     * @return MYDIGIPASS app installed.
+     * @return boolean
      */
     public boolean isMdpInstalled() {
         try {
@@ -323,10 +224,15 @@ public class MDPMobile {
     }
 
     /**
-     * Check if the MYDIGIPASS app version installed can handle the oauth intent.
+     * Checks if there are activities that can run the specific intent.
      *
-     * @return MYDIGIPASS can handle intent?.
+     * As most of the MYDIGIPASS users now use at least version 2.0 where app2app is implemented,
+     * we don't need to check anymore if the intent is possible.
+     *
+     * @deprecated
+     * @return boolean
      */
+    @Deprecated
     public boolean canMdpHandleIntent(Intent intent) {
         PackageManager manager = context.getPackageManager();
         List<ResolveInfo> infos = manager.queryIntentActivities(intent, 0);
@@ -334,60 +240,74 @@ public class MDPMobile {
     }
 
     /**
-     * Check if the intent comes from the MYDIGIPASS App.
+     * Checks if the incoming intent is coming from the MDP app.
      *
-     * @param data data intent coming from the onActivityResult method.
-     * @return can handle the result?
+     * @param intent data intent coming from the onActivityResult method.
+     * @return boolean
      */
-    public boolean canHandleResult(Intent data) {
-        if (data != null) {
-            String uri = data.getStringExtra("redirect-uri");
+    public boolean canHandleResult(Intent intent) {
+        if (intent != null) {
+            String uri = intent.getStringExtra("redirect-uri");
             return uri != null && uri.equals(getRedirectUri());
         }
         return false;
     }
 
     /**
-     * Anything extra you want/need to be passed back to the redirect URI.
+     * Takes a map of key/values and adds them to the oauth request. When a reserved keyword is used
+     * this throws an MDPException.
      *
-     * @return
+     * @see com.vasco.mydigipass.sdk.oauth.OAuthReservedParameters#RESERVED_PARAMETERS for a list of reserved keywords.
+     * @param parameters map with key values
+     * @throws MDPException
      */
-    public Map<String, String> getPassthroughParams() {
-        return passthroughParams;
+    public void setPassthroughParams(Map<String, String> parameters) {
+        this.incomingParameters.addPassthroughParameters(parameters);
     }
 
     /**
-     * Sets passthrough parameters.
-     *
-     * @param passthroughParams
+     * Sets the current Activity to participate in lifecycle callbacks.
+     * @param activity
      */
-    public void setPassthroughParams(Map<String, String> passthroughParams) {
-        this.passthroughParams = passthroughParams;
-    }
-
-    public void setContext(Activity context) {
-        this.context = context;
+    public void setContext(Activity activity) {
+        this.context = activity;
     }
 
     /**
-     * Open the browser to the MYDIGIPASS oauth url.
+     * Generates the complete OAuth uri.
+     *
+     * @return Uri
+     */
+    protected Uri getOAuthUrl() {
+        OauthUriBuilder uriBuilder = new OauthUriBuilder(BuildConfig.MDP_FALLBACK_URL);
+        uriBuilder.setParameters(this.incomingParameters);
+        return uriBuilder.getUri();
+    }
+
+    /**
+     * Opens a browser and redirects the user to the generated oauth url.
      */
     protected void openBrowser() {
-        Intent browserIntent = new Intent(Intent.ACTION_VIEW, getOauthUri());
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, getOAuthUrl());
         context.startActivity(browserIntent);
     }
 
+    /**
+     * Returns the given context.
+     *
+     * @return Activity
+     */
     protected Activity getContext() {
         return this.context;
     }
 
     /**
-     * Returns the package name of the user his app.
+     * Returns the incoming parameters set by the ASP.
      *
-     * @return user's packagename.
+     * @return Parameters
      */
-    private String getPackageName() {
-        return context.getPackageName();
+    protected Parameters getIncomingParameters() {
+        return incomingParameters;
     }
 
     /**
@@ -402,25 +322,10 @@ public class MDPMobile {
     }
 
     /**
-     * Builds a response object to send to the user.
+     * Returns a dialog with 2 options. Install the app or use the webflow.
      *
-     * @param success     authentication successful?
-     * @param code        authorization code
-     * @param state       user's state parameter
-     * @param redirectUri redirectUri.
-     * @return MDPResponse
+     * @return AlertDialog
      */
-    private MDPResponse buildResponse(boolean success, String code, String state, String redirectUri, String scope, Map<String, String> passthroughParams) {
-        MDPResponse response = new MDPResponse();
-        response.setAuthorizationCode(code);
-        response.setState(state);
-        response.setSuccess(success);
-        response.setRedirectUri(redirectUri);
-        response.setScope(scope);
-        response.setPassthroughParams(passthroughParams);
-        return response;
-    }
-
     private AlertDialog buildDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(new ContextThemeWrapper(context, android.R.style.Theme_Holo_Light));
 
@@ -450,13 +355,19 @@ public class MDPMobile {
     }
 
     /**
-     * Check if the code and state parameters are provided.
+     * Handles the callback back to the app that implemented this SDK.
      *
-     * @param code  intent code
-     * @param state intent state
-     * @return does the request have a code and state?
+     * @param response can be null or a {@link MDPResponse} object.
      */
-    private boolean isValidRequest(String code, String state) {
-        return code != null && state != null && !code.trim().equals("") && !state.trim().equals("");
+    private void callback(MDPResponse response) {
+        if (response != null) {
+            if (!response.containsError()) {
+                mOnAuthenticatedListener.onMDPAuthenticationSuccess(response);
+            } else {
+                mOnAuthenticatedListener.onMDPAuthenticationFail(response);
+            }
+        } else {
+            mOnAuthenticatedListener.onMDPAuthenticationFail(null);
+        }
     }
 }

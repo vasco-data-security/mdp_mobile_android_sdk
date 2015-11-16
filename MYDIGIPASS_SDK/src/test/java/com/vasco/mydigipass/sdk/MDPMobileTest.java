@@ -7,6 +7,7 @@ package com.vasco.mydigipass.sdk;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Bundle;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -22,9 +23,11 @@ import java.util.Map;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.atMost;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -111,27 +114,13 @@ public class MDPMobileTest {
     }
 
     @Test
-    public void testStateParameter() throws Exception {
-        mydigipass.authenticate("1234");
-
-        assertEquals("1234", mydigipass.getState());
-    }
-
-    @Test
-    public void testScopeParameter() {
-        mydigipass.authenticate("1234", "eid_profile", null);
-
-        assertEquals("eid_profile", mydigipass.getScope());
-    }
-
-    @Test
     public void testPassthroughParameters() {
         Map<String, String> extraParams = new HashMap<>();
         extraParams.put("test", "fubar");
 
         mydigipass.authenticate("1234", "eid_profile", extraParams);
 
-        assertEquals("fubar", mydigipass.getPassthroughParams().get("test"));
+        assertEquals("fubar", mydigipass.getIncomingParameters().get("test"));
     }
 
     @Test
@@ -140,10 +129,20 @@ public class MDPMobileTest {
         assertEquals("myclientid111222333444555666778899", this.mydigipass.getClientId());
     }
 
+    @Test(expected = MDPException.class)
+    public void testSetClientIdException() {
+        this.mydigipass.setClientId(null);
+    }
+
     @Test
     public void testSetRedirectUri() {
         this.mydigipass.setRedirectUri("mdp://this.is.test");
         assertEquals("mdp://this.is.test", this.mydigipass.getRedirectUri());
+    }
+
+    @Test(expected = MDPException.class)
+    public void testSetRedirectUriException() {
+        this.mydigipass.setRedirectUri(null);
     }
 
     @Test
@@ -213,7 +212,8 @@ public class MDPMobileTest {
     @Test
     public void testWebFlowMdpIntentWrongParameter() {
         Intent browserIntent = mock(Intent.class);
-        Uri foreignUri = Uri.parse("http://mydigipass-redirect-uri.com?test=foo");
+
+        Uri foreignUri = Uri.parse("http://mydigipass-redirect-uri.com?test=foo&error=test&error_title=fubar&error_description=djfkkjsd");
 
         mydigipass.setMDPAuthenticationListener(mockActivity);
         mydigipass.setRedirectUri("http://mydigipass-redirect-uri.com");
@@ -234,7 +234,7 @@ public class MDPMobileTest {
         doReturn(false).when(test).isMdpInstalled();
         Uri uri = mock(Uri.class);
 
-        doReturn(uri).when(test).getOauthUri();
+        doReturn(uri).when(test).getOAuthUrl();
 
         test.setClientId("client");
         test.setRedirectUri("http://test.com");
@@ -262,11 +262,16 @@ public class MDPMobileTest {
 
     @Test
     public void testHandleResultSuccess() throws Exception {
-        Intent appIntent = mock(Intent.class);
+        Intent appIntent = new Intent();
+        Bundle bundle = new Bundle();
 
-        doReturn("correct-uri").when(appIntent).getStringExtra("redirect-uri");
-        doReturn("correct1234").when(appIntent).getStringExtra("auth-code");
-        doReturn("state1234").when(appIntent).getStringExtra("state");
+        bundle.putString("auth-code", "test");
+        bundle.putString("scope", "profile");
+        bundle.putString("state", "test");
+        bundle.putString("redirect-uri", "correct-uri");
+        bundle.putString("code", "test");
+
+        appIntent.putExtras(bundle);
 
         mydigipass.setMDPAuthenticationListener(mockActivity);
         mydigipass.setRedirectUri("correct-uri");
@@ -277,12 +282,16 @@ public class MDPMobileTest {
     }
 
     @Test
-    public void testHandleResultNoCodeAndState() throws Exception {
-        Intent appIntent = mock(Intent.class);
+    public void testHandleResultError() throws Exception {
+        Intent appIntent = new Intent();
+        Bundle bundle = new Bundle();
 
-        doReturn("correct-uri").when(appIntent).getStringExtra("redirect-uri");
-        doReturn(null).when(appIntent).getStringExtra("auth-code");
-        doReturn(null).when(appIntent).getStringExtra("state");
+        bundle.putString("redirect-uri", "correct-uri");
+        bundle.putString("error", "test");
+        bundle.putString("error_title", "doesnt work");
+        bundle.putString("error_description", "this doesn't work");
+
+        appIntent.putExtras(bundle);
 
         mydigipass.setMDPAuthenticationListener(mockActivity);
         mydigipass.setRedirectUri("correct-uri");
@@ -309,8 +318,8 @@ public class MDPMobileTest {
         mydigipass.authenticate("1234", "eid_profile", extraParams);
 
         assertEquals(
-                "https://www.mydigipass.com/oauth/authenticate?test=fubar&bundle_identifier=com.vasco.mydigipass.sdk&client_id=client&redirect_uri=http%3A%2F%2Ftest.com&state=1234&scope=eid_profile&response_type=code",
-                mydigipass.getOAuthUrl());
+                BuildConfig.MDP_FALLBACK_URL + "?client_id=client&redirect_uri=http%3A%2F%2Ftest.com&state=1234&scope=eid_profile&test=fubar&response_type=code",
+                mydigipass.getOAuthUrl().toString());
     }
 
     @Test
@@ -323,7 +332,19 @@ public class MDPMobileTest {
 
         mydigipass.authenticate("1234", "eid_profile", extraParams);
 
-        assertEquals("www.mydigipass.com", mydigipass.getOauthUri().getHost());
+        Uri uri = Uri.parse(BuildConfig.MDP_FALLBACK_URL);
+
+        assertEquals(uri.getHost(), mydigipass.getOAuthUrl().getHost());
+    }
+
+    @Test
+    public void testGetOAuthUrlWithoutScope() {
+        mydigipass.setClientId("client");
+        mydigipass.setRedirectUri("http://test.com");
+
+        mydigipass.authenticate("1234", null, null);
+
+        assertEquals(BuildConfig.MDP_FALLBACK_URL + "?client_id=client&redirect_uri=http%3A%2F%2Ftest.com&state=1234&response_type=code", mydigipass.getOAuthUrl().toString());
     }
 
     @Test
@@ -335,5 +356,11 @@ public class MDPMobileTest {
     @Test
     public void testNoIntent() {
         assertFalse(mydigipass.canHandleResult(null));
+    }
+
+    @Test
+    public void testOpenBrowser() {
+        mydigipass.openBrowser();
+        verify(mockActivity, atMost(1)).startActivity(any(Intent.class));
     }
 }
