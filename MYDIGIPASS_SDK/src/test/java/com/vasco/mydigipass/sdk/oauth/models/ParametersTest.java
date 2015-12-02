@@ -68,7 +68,7 @@ public class ParametersTest {
         Parameters parameters = new Parameters();
 
         Map<String, String> map = new HashMap<>();
-        map.put("is_sandbox", "test");
+        map.put("error", "test");
 
         parameters.addPassthroughParameters(map);
     }
@@ -77,8 +77,8 @@ public class ParametersTest {
     public void testGetPassthroughParamsWithValues() {
         Parameters parameters = new Parameters();
 
+        parameters.put("error", "test");
         parameters.put("test", "foo");
-        parameters.put("is_sandbox", "true");
 
         assertEquals(1, parameters.getPassthroughParams().size());
     }
@@ -86,7 +86,7 @@ public class ParametersTest {
     @Test
     public void testGetPassthroughParamsWithNoValues() {
         Parameters parameters = new Parameters();
-        parameters.put("is_sandbox", "true");
+        parameters.put("error", "test");
 
         assertEquals(0, parameters.getPassthroughParams().size());
     }

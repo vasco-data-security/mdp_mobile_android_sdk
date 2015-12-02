@@ -13,7 +13,7 @@ The SDK connects your mobile application with the MYDIGIPASS Authenticator allow
 
 ## Installation
 
-1. Download the latest version of our SDK in [the release section](https://github.com/vasco-data-security/mdp_mobile_android_sdk/releases)
+1. Download the latest version of our SDK in [the release section](https://github.com/vasco-data-security/mdp_mobile_android_sdk/releases/latest)
 2. Move the binary file into your app's *libs* folder; The file extension is **.aar**.
 3. Add the `compile(name: 'mydigipass-sdk-file-name-in-the-libs-folder', ext: 'aar')` dependency to the app's *build.gradle* file
 4. Rebuild your application
@@ -56,9 +56,9 @@ In the example below we register `MyActivity` in the *AndroidManifest.xml* file 
 
 *Note:*
 
-If you know nothing about *Intents* and *Intent Filters* we suggest you to read the documentation at [http://developer.android.com/guide/components/intents-filters.html](http://developer.android.com/guide/components/intents-filters.html).
+If you know nothing about *Intents* and *Intent Filters* we suggest you to read the documentation at [https://developer.android.com/guide/components/intents-filters.html](https://developer.android.com/guide/components/intents-filters.html).
 
-More information about how the example above works can be found at [http://developer.android.com/training/app-indexing/deep-linking.html](http://developer.android.com/training/app-indexing/deep-linking.html).
+More information about how the example above works can be found at [https://developer.android.com/training/app-indexing/deep-linking.html](https://developer.android.com/training/app-indexing/deep-linking.html).
 
 ### Initialization of the SDK
 
@@ -81,28 +81,47 @@ public class MyActivity extends Activity {
 
 ### Using your Client ID and mobile app redirect URI with the SDK
 
-Configuring your mobile **redirect URI** and **client ID** in your *Activity*:
+Configure your mobile **redirect URI** and **client ID** in the `onCreate` callback method of your *Activity*:
 
 ```java
 public class MyActivity extends Activity {
 
-  private MDPMobile mydigipass;
+    private MDPMobile mydigipass;
 
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+    protected void onCreate(Bundle savedInstanceState) {
+        // Other code
 
-    // Initialize the MYDIGIPASS SDK.
-    mydigipass = new MDPMobile(this);
+        // Configure your MYDIGIPASS client ID.
+        mydigipass.setClientId("your-mdp-client-id");
 
-    // Configure your MYDIGIPASS client ID.
-    mydigipass.setClientId("your-mdp-client-id");
-    // Configure your MYDIGIPASS redirect URI.
-    mydigipass.setRedirectUri("your-app://mydigipass-login");
+        // Configure your MYDIGIPASS redirect URI.
+        mydigipass.setRedirectUri("your-app://mydigipass-login");
+    }
+}
+```
 
-    // Detects when a redirect is coming back into the app.
-    mydigipass.webFlow();
-  }
+### Handling incoming data (intent)
+
+Allow your app to deal with incoming data from the MYDIGIPASS website and the MYDIGIPASS app:
+
+```java
+public class MyActivity extends Activity {
+
+    private MDPMobile mydigipass;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        // Other code
+
+        // Handles an incoming intent triggered by the MYDIGIPASS website.
+        mydigipass.webFlow();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // Handles an incoming intent triggered by the MYDIGIPASS app.
+        mydigipass.handleResult(requestCode, resultCode, data);
+    }
 }
 ```
 
@@ -127,50 +146,74 @@ A brief description about these parameters, more information can be found at [ht
 ```java
 public class MyActivity extends Activity implements OnMDPAuthenticationListener {
 
-  private MDPMobile mydigipass;
+    private MDPMobile mydigipass;
 
-  ...
+    // Other code
 
-  public void myButtonClick(View view) {
-      Map<String, String> passthroughParameters = new HashMap<>();
-      passthroughParameters.put("redirect_to", "dashboard");
-      passthroughParameters.put("new_user", "yes");
-      
-      mydigipass.authenticate("xyzabc1234567", "email phone", passthroughParameters);
-  }
+    public void myButtonClick(View view) {
+        Map<String, String> passthroughParameters = new HashMap<>();
+        passthroughParameters.put("redirect_to", "dashboard");
+        passthroughParameters.put("new_user", "yes");
+
+        mydigipass.authenticate("xyzabc1234567", "email phone", passthroughParameters);
+    }
 }
 ```
 
 *Notes:*
 
-* Review [this sequence diagram](https://developer.mydigipass.com/mobile_integration) and the [OAuth 2.0 spec](http://tools.ietf.org/html/rfc6749#section-10.12) for more info about the `state` parameter.
-* Review [this sequence diagram](https://developer.mydigipass.com/mobile_integration) and the [OAuth 2.0 spec](http://tools.ietf.org/html/rfc6749#section-3.3) for more info about the `scope` parameter.
+* Review [this sequence diagram](https://developer.mydigipass.com/mobile_integration) and the [OAuth 2.0 spec](https://tools.ietf.org/html/rfc6749#section-10.12) for more info about the `state` parameter.
+* Review [this sequence diagram](https://developer.mydigipass.com/mobile_integration) and the [OAuth 2.0 spec](https://tools.ietf.org/html/rfc6749#section-3.3) for more info about the `scope` parameter.
 * The [valid scopes](https://developer.mydigipass.com/reference_guide_button#_user_data_authorization_scope_values) are listed at [https://developer.mydigipass.com](https://developer.mydigipass.com).
 
 #### Callbacks
 
 When an authentication has been performed by the SDK it will trigger a callback.
 
+Set the MYDIGIPASS authentication listener to enable authentication callbacks:
+
+```java
+public class MyActivity extends Activity implements OnMDPAuthenticationListener {
+
+    private MDPMobile mydigipass;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        // Other code
+
+        // Sets the MYDIGIPASS authentication listener to enable authentication callbacks
+        mydigipass.setMDPAuthenticationListener(this);
+    }
+
+    // Other code
+}
+```
+
 Use the `OnMDPAuthenticationListener` listener in your *Activity* and implement the `onMDPAuthenticationSuccess` and `onMDPAuthenticationFail` methods to execute code on authentication success or failure:
 
 ```java
 public class MyActivity extends Activity implements OnMDPAuthenticationListener {
 
-  ...
+    // Other code
 
-  @Override
-  public void onMDPAuthenticationSuccess(MDPResponse response) {
-    String authorizationCode = response.getAuthorizationCode();
-    String state = response.getState();
-  }
-
-  @Override
-  public void onMDPAuthenticationFail(MDPResponse response) {
-    if(response != null) {
-      Error error = response.getError();
+    @Override
+    public void onMDPAuthenticationSuccess(MDPResponse response) {
+        String authorizationCode = response.getAuthorizationCode();
+        String state = response.getState();
     }
-  }
+
+    @Override
+    public void onMDPAuthenticationFail(MDPResponse response) {
+        if (response != null) {
+            Error error = response.getError();
+        }
+    }
 }
 ```
 
 *Note:* More information about the MDPResponse object can be found in the attached javadoc.
+
+## Building from scratch
+
+To build the project from scratch you need to check out this project and run the gradle command assembleRelease. You can
+also open it in Android studio and use the gradle menu to build. This will generate an .aar file under MYDIGIPASS_SDK/build/outputs.

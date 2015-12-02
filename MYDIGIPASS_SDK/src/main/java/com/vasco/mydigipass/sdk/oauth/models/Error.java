@@ -17,6 +17,7 @@ public class Error {
         this.errors.put("not_authenticated", ErrorType.NOT_AUTHENTICATED);
         this.errors.put("account_disabled", ErrorType.ACCOUNT_DISABLED);
         this.errors.put("account_no_permissions", ErrorType.NO_PERMISSIONS);
+        this.errors.put("access_denied", ErrorType.ACCESS_DENIED);
         this.errors.put("invalid_request", ErrorType.INVALID_REQUEST);
         this.errors.put("authentication_method_not_allowed", ErrorType.AUTHENTICATION_METHOD_NOT_ALLOWED);
         this.errors.put("eid_scopes_present_but_not_allowed", ErrorType.EID_SCOPE_NOT_ALLOWED);

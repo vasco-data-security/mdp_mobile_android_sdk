@@ -24,7 +24,6 @@ public class OAuthReservedParameters {
             "auth-code",
             "clientId",
             "redirectUri",
-            "is_sandbox",
     };
 
     private OAuthReservedParameters() {

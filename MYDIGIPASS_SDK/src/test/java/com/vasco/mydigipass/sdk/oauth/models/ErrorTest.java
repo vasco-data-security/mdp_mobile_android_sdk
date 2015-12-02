@@ -66,6 +66,12 @@ public class ErrorTest {
     }
 
     @Test
+    public void testAccessDeniedError() {
+        this.error.setKey("access_denied");
+        assertEquals(ErrorType.ACCESS_DENIED, this.error.getType());
+    }
+
+    @Test
     public void testGetTypeAuthenticationMethodNotAllowed() {
         error.setKey("authentication_method_not_allowed");
         assertEquals(ErrorType.AUTHENTICATION_METHOD_NOT_ALLOWED, error.getType());
